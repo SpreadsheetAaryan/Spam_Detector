@@ -1,24 +1,34 @@
-# Spam Detector Project
+# Spam Detector
 
-This project implements a spam detector using a machine learning pipeline in Python. The pipeline processes email data, converts it to a format suitable for machine learning, and trains a logistic regression model to classify emails as spam or not spam.
+An email spam classifier built as a scikit-learn pipeline, trained on the Apache SpamAssassin public corpus (2,500 ham and 500 spam emails, included under `datasets/spam/`). This is my solution to exercise 4 in chapter 3 of Aurélien Géron's *Hands-On Machine Learning* (3rd ed.).
 
-## Data
+## How it works
 
-The project expects the email dataset to be provided as two lists: `X` containing the email contents and `y` containing the corresponding labels.
+`spam_detector.ipynb` builds a three-step pipeline:
 
-## Model
+1. **`EmailToWordCounterTransformer`** (custom): parses each email, converts HTML parts to plain text, optionally strips headers, lowercases, replaces URLs and numbers with placeholder tokens, removes punctuation, stems words with NLTK's Porter stemmer, and counts words.
+2. **`WordCounterToVectorTransformer`** (custom): keeps the 1,000 most common words seen in training and turns each email's counts into a sparse vector.
+3. **`LogisticRegression`** (`max_iter=1000`). I started with Naive Bayes and switched to logistic regression after it scored better.
 
-The machine learning pipeline consists of the following steps:
-1. `EmailToWordCounterTransformer`: Transforms emails into word count vectors.
-2. `WordCounterToVectorTransformer`: Converts word count vectors into numerical vectors suitable for machine learning.
-3. `LogisticRegression`: Trains a logistic regression model on the processed data.
+The fitted pipeline is saved to `spam_detector_model.pkl` with joblib.
 
-## Evaluation
+## Results
 
-After training, the model is evaluated using accuracy as the metric. The evaluation script outputs the accuracy of the model on the test dataset.
+Re-run in October 2026 with the notebook's 80/20 split (`random_state=42`, 600 test emails):
 
-## Process of Building
+| Metric | Value |
+|---|---|
+| Precision (spam) | 96.88% |
+| Recall (spam) | 97.89% |
+| 3-fold CV accuracy on the training set | 98.5% |
 
-Building the spam detector project was a comprehensive and enlightening experience. The journey began with the crucial step of data preprocessing, which is often the most time-consuming part of any machine learning project. The raw email data needed to be transformed into a format suitable for training a machine learning model. This involved tokenizing the email content, converting the text into numerical features, and normalizing these features. I spent considerable time studying how to effectively preprocess text data, which included learning about various techniques like word count vectorization and Term Frequency-Inverse Document Frequency (TF-IDF). To streamline this process, I had to dive deep into creating custom transformers and integrating them into a scikit-learn pipeline, ensuring that each step of the preprocessing was systematically and efficiently applied.
+Only 1 in 6 emails is spam, so precision and recall say more than accuracy here. These are "easy ham" emails from 2002, so expect lower numbers on modern mail.
 
-Initially, I chose to implement a Naive Bayes classifier due to its simplicity and efficiency in text classification tasks. However, despite its theoretical advantages, the model did not yield satisfactory accuracy. This discrepancy led me to revisit the preprocessing steps and the assumptions made by the Naive Bayes algorithm about feature independence, which might not hold true for the email data. I decided to switch to Logistic Regression, a more complex and widely-used algorithm for binary classification. Setting the max_iter parameter to 1000 ensured that the model had sufficient iterations to converge to an optimal solution. This change significantly improved the accuracy, and the model's performance was much more in line with the expected results. Through this process, I gained a deeper understanding of model selection, hyperparameter tuning, and the importance of iterative testing and validation in machine learning.
+## Run it
+
+```bash
+pip install scikit-learn nltk urlextract scipy numpy pandas joblib jupyter
+jupyter notebook spam_detector.ipynb
+```
+
+The dataset is already in the repo. If `datasets/spam/` is missing, the first cell downloads it from spamassassin.apache.org.
